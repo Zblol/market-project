@@ -2,9 +2,14 @@ from django.db import models
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
+from PIL import Image
+from django.urls import reverse
 
 User = get_user_model()
 
+def get_product_url(obj, viewname):
+    ct_model = obj.__class__.meta.model_name
+    return reverse(viewname, kwargs={'ct_model': ct_model, 'slug': obj.slug})
 
 class LatestProductsManager:
     @staticmethod
@@ -50,6 +55,15 @@ class Product(models.Model):
     def __str__(self):
         return self.title
 
+    def save(self, *args, **kwargs):
+        super().save()
+        img = Image.open(self.image.path)
+
+        if img.height > 400 or img.width > 400:
+            output_size = (500, 500)
+            img.thumbnail(output_size)
+            img.save()
+
 
 class Notebook(Product):
     diagonal = models.CharField(max_length=255)
@@ -62,6 +76,8 @@ class Notebook(Product):
     def __str__(self):
         return "{} : {}".format(self.category.name, self.title)
 
+    def get_absolute_url(self):
+        return get_product_url(self,'product_detail')
 
 class Smartphone(Product):
     diagonal = models.CharField(max_length=255)
@@ -77,6 +93,8 @@ class Smartphone(Product):
     def __str__(self):
         return "{} : {}".format(self.category.name, self.title)
 
+    def get_absolute_url(self):
+        return get_product_url(self,'product_detail')
 
 class CartProduct(models.Model):
     user = models.ForeignKey("Customer", verbose_name='Customer', on_delete=models.CASCADE)

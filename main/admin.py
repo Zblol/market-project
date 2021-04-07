@@ -1,9 +1,11 @@
 from django.contrib import admin
 from .models import *
 from django import forms
-from django.forms import ModelChoiceField
+from django.forms import ModelChoiceField, ModelForm
+
 
 """__________________NOTEBOOK__________________"""
+
 
 class NotebookAdmin(admin.ModelAdmin):
 
@@ -11,7 +13,6 @@ class NotebookAdmin(admin.ModelAdmin):
         if db_field.name == 'category':
             return ModelChoiceField(Category.objects.filter(slug='notebooks'))
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
-
 
 
 """__________________SMARTPHONE__________________"""
