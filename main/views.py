@@ -1,3 +1,4 @@
 from django.shortcuts import render
 
-# Create your views here.
+def test_view(requst):
+    return render(requst,'base.html',{})
