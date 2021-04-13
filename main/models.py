@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
 from PIL import Image
-from django.urls import reverse
+from django.urls import reverse, path
 
 User = get_user_model()
 
@@ -40,7 +40,6 @@ class LatestProducts:
 
 
 class CategoryManager(models.Manager):
-
     CATEGORY_NAME_COUNT_NAME = {
         'Notebooks': 'notebook__count',
         'Smartphone': 'smartphone__count',
@@ -50,13 +49,14 @@ class CategoryManager(models.Manager):
         return super().get_queryset()
 
     def get_categories_for_left_sidebar(self):
-        models = get_models_for_count('notebook','smartphone')
+        models = get_models_for_count('notebook', 'smartphone')
         qs = list(self.get_query_set().annotate(*models))
         data = [
             dict(name=c.name, url=c.get_absolute_url, count=getattr(c, self.CATEGORY_NAME_COUNT_NAME[c.name]))
             for c in qs
         ]
         return data
+
 
 class Category(models.Model):
     name = models.CharField(max_length=255, verbose_name='Category name')
@@ -67,7 +67,7 @@ class Category(models.Model):
         return self.name
 
     def get_absolute_url(self):
-        return reverse('catefory_detail', kwargs={'slug':self.slug})
+        return reverse('catefory_detail', kwargs={'slug': self.slug})
 
 
 class Product(models.Model):
@@ -89,7 +89,7 @@ class Product(models.Model):
         img = Image.open(self.image.path)
 
         if img.height > 400 or img.width > 400:
-            output_size = (500, 500)
+            output_size = (300, 300)
             img.thumbnail(output_size)
             img.save(self.image.path)
 
