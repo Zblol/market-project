@@ -18,8 +18,8 @@
       <th scope="row">{{ item.content_object.title }}</th>
       <td><img src="{{ item.content_object.image.url }}" class="img-fluid"></td>
       <td>{{ item.content_object.price }} RUB</td>
-      <td>{{item.total_products}}</td>
-      <td>{{item.final_price}} RUB</td>
+      <td>{{item.count}}</td>
+      <td>{{item.total_price}} RUB</td>
     </tr>
   {% endfor %}
   </tbody>
