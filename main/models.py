@@ -4,6 +4,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
 from PIL import Image
 from django.urls import reverse, path
+from django.utils import timezone
 
 User = get_user_model()
 
@@ -158,21 +159,62 @@ class Cart(models.Model):
     def __str__(self):
         return str(self.id)
 
-    def save(self,*args,**kwargs):
-        cart_data = self.products.aggregate(models.Sum('total_price'), models.Count('id'))
-        if cart_data.get('total_price__sum'):
-            self.final_price = cart_data.get('total_price__sum')
-        else:
-            self.final_price=0
-        self.total_products = cart_data['id__count']
-        super().save(*args,**kwargs)
-
-
 
 class Customer(models.Model):
     user = models.ForeignKey(User, verbose_name='Customer', on_delete=models.CASCADE)
     phone = models.CharField(max_length=20, verbose_name='phone number', null=True, blank=True)
     address = models.CharField(max_length=255, verbose_name='Address', null=True, blank=True)
+    orders = models.ManyToManyField('Order', related_name='related_customer')
 
     def __str__(self):
-        return "Customer: {} {}".format(self.user.first_name, self.user.last_name)
+        return self.user.username
+
+
+class Order(models.Model):
+
+    STATUS_NEW  = 'new'
+    STATUS_IN_PROGRESS = 'in_progress'
+    STATUS_READY = 'is_ready'
+    STATUS_COMPLETED = 'completed'
+
+    BUYING_TYPE_SELF = 'self'
+    BUYING_TYPE_DELIVERY = 'delivery'
+
+    STATUS_CHOICES = (
+        (STATUS_NEW , 'new order'),
+        (STATUS_IN_PROGRESS, 'order progressing'),
+        (STATUS_READY, 'order finished'),
+        (STATUS_COMPLETED, 'order delivered'),
+    )
+
+
+    BUYING_TYPE_CHOICES = (
+
+        (BUYING_TYPE_SELF, 'take self'),
+        (BUYING_TYPE_DELIVERY, 'delivery to'),
+    )
+
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name='related_orders')
+    first_name = models.CharField(max_length=255)
+    last_name = models.CharField(max_length=255)
+    phone = models.CharField(max_length=20)
+    cart = models.ForeignKey(Cart,on_delete=models.CASCADE, null=True,blank=True)
+    address = models.CharField(max_length=1024, null=True, blank=True)
+    status = models.CharField(
+        max_length= 100,
+        choices=STATUS_CHOICES,
+        default=STATUS_NEW,
+    )
+    buying_type = models.CharField(
+        max_length=100,
+        choices=BUYING_TYPE_CHOICES,
+        default=BUYING_TYPE_SELF,
+    )
+
+    comment = models.TextField(null=True,blank=True)
+    created_at = models.DateTimeField(auto_now=True)
+    order_date = models.DateField(default=timezone.now)
+
+
+    def __str__(self):
+        return str(self.id)

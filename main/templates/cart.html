@@ -53,6 +53,11 @@
                 <td>Result</td>
                 <td>{{ cart.total_products }}</td>
                 <td><strong>{{ cart.final_price }} RUB</strong></td>
+                <td>
+                    <a href="{% url 'checkout' %}">
+                        <button class="btn btn-primary">Make order</button>
+                    </a>
+                </td>
             </tr>
             </tbody>
         </table>
