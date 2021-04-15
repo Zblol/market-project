@@ -1,12 +1,13 @@
 from django.shortcuts import render
 from django.views.generic import DetailView, View
 from .models import Notebook, Smartphone, Category, LatestProducts, Customer, Cart, CartProduct
-from .mixins import CategoryDetailMixin , CartMixin
+from .mixins import CategoryDetailMixin, CartMixin
 from django.http import HttpResponseRedirect
 from django.contrib.contenttypes.models import ContentType
+from django.contrib import messages
 
 
-class BaseView(CartMixin,View):
+class BaseView(CartMixin, View):
 
     def get(self, request, *args, **kwargs):
         categories = Category.objects.get_categories_for_left_sidebar()
@@ -16,7 +17,7 @@ class BaseView(CartMixin,View):
         context = {
             'categories': categories,
             'products': products,
-            'cart':self.cart,
+            'cart': self.cart,
         }
         return render(request, 'base.html', context)
 
@@ -50,21 +51,56 @@ class CategoryDetailView(CategoryDetailMixin, DetailView):
     slug_url_kwarg = 'slug'
 
 
-class AddToCartView(CartMixin,View):
+class AddToCartView(CartMixin, View):
 
     def get(self, request, *args, **kwargs):
         ct_model, product_slug = kwargs.get('ct_model'), kwargs.get('slug')
         content_type = ContentType.objects.get(model=ct_model)
         product = content_type.model_class().objects.get(slug=product_slug)
         cart_product, created = CartProduct.objects.get_or_create(
-            user=self.cart.owner, cart=self.cart, content_type=content_type,object_id=product.id
+            user=self.cart.owner, cart=self.cart, content_type=content_type, object_id=product.id
         )
         if created:
             self.cart.products.add(cart_product)
+        self.cart.save()
+        messages.add_message(request,messages.INFO, "Product added")
         return HttpResponseRedirect('/cart/')
 
 
-class CartView(CartMixin,View):
+class DeleteFromCartView(CartMixin, View):
+
+    def get(self, request, *args, **kwargs):
+        ct_model, product_slug = kwargs.get('ct_model'), kwargs.get('slug')
+        content_type = ContentType.objects.get(model=ct_model)
+        product = content_type.model_class().objects.get(slug=product_slug)
+        cart_product = CartProduct.objects.get(
+            user=self.cart.owner, cart=self.cart, content_type=content_type, object_id=product.id
+        )
+        self.cart.products.remove(cart_product)
+        cart_product.delete()
+        self.cart.save()
+        messages.add_message(request,messages.INFO, "Product deleted")
+        return HttpResponseRedirect('/cart/')
+
+
+class ChangeCountView(CartMixin, View):
+
+    def post(self, request, *args, **kwargs):
+        ct_model, product_slug = kwargs.get('ct_model'), kwargs.get('slug')
+        content_type = ContentType.objects.get(model=ct_model)
+        product = content_type.model_class().objects.get(slug=product_slug)
+        cart_product = CartProduct.objects.get(
+            user=self.cart.owner, cart=self.cart, content_type=content_type, object_id=product.id
+        )
+        count = int(request.POST.get('count'))
+        cart_product.count = count
+        cart_product.save()
+        self.cart.save()
+        messages.add_message(request,messages.INFO, "Product count changed")
+        return HttpResponseRedirect('/cart/')
+
+
+class CartView(CartMixin, View):
 
     def get(self, request, *args, **kwargs):
         categories = Category.objects.get_categories_for_left_sidebar()
