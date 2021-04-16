@@ -8,6 +8,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib import messages
 from .forms import OrderForm
 from .utils import recalc_cart
+from django.contrib.messages.storage.fallback import FallbackStorage
 
 
 class BaseView(CartMixin, View):

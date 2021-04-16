@@ -85,14 +85,14 @@ class Product(models.Model):
     def __str__(self):
         return self.title
 
-    def save(self, *args, **kwargs):
-        super().save()
-        img = Image.open(self.image.path)
-
-        if img.height > 400 or img.width > 400:
-            output_size = (300, 300)
-            img.thumbnail(output_size)
-            img.save(self.image.path)
+    # def save(self, *args, **kwargs):
+    #     super().save()
+    #     img = Image.open(self.image.path)
+    #
+    #     if img.height > 400 or img.width > 400:
+    #         output_size = (300, 300)
+    #         img.thumbnail(output_size)
+    #         img.save(self.image.path)
 
 
     def get_model_name(self):
